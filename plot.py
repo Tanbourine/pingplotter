@@ -1,4 +1,4 @@
-from ping import Ping
+from pingplotter.ping import Ping
 import os
 
 def main():

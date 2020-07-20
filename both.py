@@ -1,4 +1,4 @@
-from ping import Ping
+from pingplotter.ping import Ping
 import os
 
 def ping_repeat(ip_addr, num):
@@ -8,10 +8,13 @@ def ping_repeat(ip_addr, num):
 		ping.append(Ping(ip, log=name+'.json'))
 
 	for i in range(num):
+		print("Cycle: ", i+1)
 		for p in ping:
 			p.ping(1)
-		print("Cycle: ", i)
+			p.print_ping(mask=['min', 'max', 'avg'])
+
 	return ping
+
 
 def show_plots(ping):
 	for p in ping:
@@ -27,7 +30,7 @@ def main():
 	num = 1
 
 	os.system('cls')
-	pings = ping_repeat(ip_addr, 500)
+	pings = ping_repeat(ip_addr, 10000)
 
 	#show_plots(pings)
 

@@ -26,10 +26,11 @@ class Ping():
 		self.options['verbose'] = kwargs.get('verbose', False)
 
 
-	def ping(self, num=10, **kwargs):
+	def ping(self, num=10, verbose=False):
 		for i in range(num):
 			self._ping()
-			print("Test: ", i+1)
+			if verbose or self.options['verbose']:
+				print(self.filename + "Test: ", i+1)
 
 
 
@@ -43,16 +44,15 @@ class Ping():
 		data = {'time':[], 'reply':[], 'stats':{}}
 
 		# Save timestamp
-		# data['time'].append(datetime.now().strftime('%Y-%m-%d %H:%M:%S PST'))
 		data['time'].append(datetime.now().isoformat())
 
 		# Parse replies
 		reply = []
 		for i in range(2, 6):
 			if result[i] in 'Destination Host Unreachable.':
-				reply.append(-1)
+				reply.append(None)
 			elif result[i] in 'Request timed Out.':
-				reply.append(-2)
+				reply.append(None)
 			else:
 				reply.append(unpack_reply(result[i]))
 
@@ -64,7 +64,29 @@ class Ping():
 		if self.options['log']:
 			self._log(data, self.options['log'])
 
+		self.file = data
+
 		return data
+
+	def print_ping(self, mask=['all']):
+		if self.file:
+			# time = self.file['time'][-1]
+			# reply = self.file['reply'][-1]
+
+			print("IP Addr: {}".format(self.ip_addr))
+			print("Time: {}".format(self.file['time'][-1]))
+			print("Reply: {}".format(self.file['reply'][-1]))
+
+			for key, value in self.file['stats'].items():
+				# stats[key] = value[-1]
+				if key in mask or 'all' in mask:
+					print("{}: {}".format(key, value[-1]))
+
+
+		else:
+			print("NO PING TO PRINT")
+
+
 
 
 
@@ -88,38 +110,47 @@ class Ping():
 	def load(self, filename):
 		file = read_json(filename)
 
+		# Convert time from iso string to datetime obj
 		for t in file['time']:
 			t = datetime.fromisoformat(t)
 		self.file = file
 		return file
 
 
-	def plot_avg(self):
+	def plot_avg(self, start_time='', end_time=''):
 		fig, ax = plt.subplots(1, 1)
 
 
-		ax.plot(mdates.date2num(self.file['time']), self.file['stats']['avg'], label='Average Ping [ms]', marker='o')
+		if self.file:
+			ax.plot(mdates.date2num(self.file['time']), self.file['stats']['avg'], label='Average Ping [ms]', marker='o')
 
-		# Format x axis
-		formatter = mdates.DateFormatter('%m/%d/%y %H:%M')
-		ax.xaxis.set_major_formatter(formatter)
-		ax.xaxis.set_major_locator(ticker.AutoLocator())
-		ax.xaxis.set_minor_locator(ticker.AutoMinorLocator())
+			# Format x axis
+			formatter = mdates.DateFormatter('%m/%d/%y %H:%M')
+			ax.xaxis.set_major_formatter(formatter)
+			ax.xaxis.set_major_locator(ticker.AutoLocator())
+			ax.xaxis.set_minor_locator(ticker.AutoMinorLocator())
 
-		ax.set_title('Average Ping to ' + self.ip_addr)
-		ax.set_ylabel('Ping [ms]')
+			ax.set_title('Average Ping to ' + self.ip_addr)
+			ax.set_ylabel('Ping [ms]')
 
-		ax.legend(loc='best')
-		fig.autofmt_xdate()
-		plt.grid()
-		#plt.show()
+			ax.legend(loc='best')
+			fig.autofmt_xdate()
+		else:
+			print("No file loaded")
+
+		return fig, ax
+
+
+	def _filter_time(self, start_time, end_time):
+		if self.file:
+			pass
+
+	def plot_scatter(self):
+		fig, ax = plt.subplots(1, 1)
 
 	def show(self):
+		plt.grid()
 		plt.show()
-
-
-
-
 
 
 
